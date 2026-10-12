@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小晶晶的法条库</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+        background: url("bg.jpg") no-repeat center center fixed;
+        background-size: cover;
+        min-height: 100vh;
+        color: #333;
+    }
+
+    .overlay {
+        min-height: 100vh;
+        background: rgba(255, 245, 247, 0.92);
+        padding: 20px;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    h1 {
+        text-align: center;
+        color: #d47a8a;
+        font-size: 22px;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+
+    .search-box {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    input {
+        flex: 1;
+        padding: 12px 14px;
+        border: 1px solid #f0d0d8;
+        border-radius: 10px;
+        font-size: 15px;
+        outline: none;
+        background: #fff;
+    }
+
+    button {
+        padding: 12px 18px;
+        background: #d47a8a;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        cursor: pointer;
+    }
+
+    .loading {
+        text-align: center;
+        color: #d47a8a;
+        padding: 30px 0;
+    }
+
+    .empty {
+        text-align: center;
+        color: #999;
+        padding: 30px 0;
+    }
+
+    .law-item {
+        background: #fff;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(212,122,138,0.08);
+        overflow: hidden;
+    }
+
+    .law-title {
+        padding: 14px 16px;
+        font-size: 15px;
+        font-weight: 600;
+        color: #333;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .law-title::after {
+        content: "▸";
+        color: #d47a8a;
+        transition: transform 0.3s;
+    }
+
+    .law-item.open .law-title::after {
+        transform: rotate(90deg);
+    }
+
+    .law-body {
+        display: none;
+        padding: 0 16px 16px;
+        border-top: 1px solid #f5e6ea;
+    }
+
+    .law-item.open .law-body {
+        display: block;
+    }
+
+    /* ===== 目录 ===== */
+    .plain-text {
+        padding: 8px 0;
+        margin-bottom: 24px;
+        white-space: pre-wrap;
+        font-size: 14px;
+        color: #555;
+    }
+
+    .toc-link {
+        padding: 4px 0;
+        color: #555;
+        cursor: pointer;
+    }
+
+    .toc-link.level-编 {
+        font-size: 18px;
+        font-weight: bold;
+        color: #d47a8a;
+    }
+
+    .toc-link.level-章 {
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    .toc-link.level-节 {
+        font-size: 14px;
+        font-weight: bold;
+        color: #888;
+        padding-left: 16px;
+    }
+
+    /* ===== 正文 ===== */
+    .law-section {
+        margin-bottom: 6px;
+    }
+
+    .section-title {
+        padding: 10px 0 6px;
+        font-weight: bold;
+        cursor: pointer;
+        color: #d47a8a;
+    }
+
+    .section-title.level-编 {
+        font-size: 18px;
+    }
+
+    .section-title.level-章 {
+        font-size: 16px;
+    }
+
+    .section-title.level-节 {
+        font-size: 14px;
+        color: #888;
+        padding-left: 12px;
+    }
+
+    .section-title::before {
+        content: "▸ ";
+        font-size: 12px;
+    }
+
+    .law-section.open .section-title::before {
+        content: "▾ ";
+    }
+
+    .section-body {
+        display: none;
+        padding: 6px 0 10px 16px;
+        white-space: pre-wrap;
+        font-size: 14px;
+        line-height: 1.9;
+        color: #555;
+    }
+
+    .law-section.open .section-body {
+        display: block;
+    }
+
+    .article {
+        margin-bottom: 10px;
+    }
+
+    #backTop {
+        position: fixed;
+        right: 20px;
+        bottom: 30px;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #d47a8a;
+        color: #fff;
+        font-size: 20px;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 999;
+    }
+    .timetable-btn {
+    text-align: center;
+    padding: 10px;
+    margin-bottom: 16px;
+    background: #d47a8a;
+    color: #fff;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+#timetable {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 245, 247, 0.97);
+    padding: 24px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+.tt-close {
+    text-align: right;
+    font-size: 16px;
+    color: #d47a8a;
+    cursor: pointer;
+    margin-bottom: 12px;
+}
+
+.tt-switch {
+    text-align: center;
+    padding: 10px;
+    margin-bottom: 16px;
+    background: #ffe4e8;
+    color: #d47a8a;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.tt-day {
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #f0d0d8;
+}
+
+.tt-day-title {
+    font-weight: bold;
+    color: #d47a8a;
+    font-size: 15px;
+    margin-bottom: 6px;
+}
+
+.tt-course {
+    font-size: 14px;
+    color: #555;
+    line-height: 1.8;
+    padding-left: 10px;
+}
+.tt-switch {
+    text-align: center;
+    padding: 8px;
+    margin-bottom: 12px;
+    background: #ffe4e8;
+    color: #d47a8a;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.tt-loose {
+    margin-bottom: 14px ;
+}
+
+.tt-tight {
+    margin-bottom: 4px ;
+}
+
+.tt-center {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.tt-single {
+    text-align: center;
+    color: #d47a8a;
+    font-size: 14px;
+    margin: 10px 0;
+}
+</style>
+</head>
+<body>
+
+<div class="overlay">
+    <h1>小晶晶的法条库</h1>
+<div class="timetable-btn" onclick="showTimetable()">📅 课程表</div>
+    <div class="search-box">
+        <input id="keyword" placeholder="输入关键词，比如：民法典" onkeydown="if(event.key==='Enter')doSearch()">
+        <button onclick="doSearch()">搜索</button>
+    </div>
+
+    <div id="result">
+        
+        <div class="empty">输入关键词开始查询</div>
+    </div>
+    <div id="timetable" style="display:none;"></div>
+</div>
+
+
+<button id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})"></button>
+
+<script>
+
+    var fileMap = {
+    "民法典": "law_民法典.json",
+    "刑法": "law_刑法.json",
+    "劳动": "law_劳动.json",
+    "婚姻": "law_婚姻.json",
+    "未成年": "law_未成年.json",
+    "治安": "law_治安.json",
+    "行政处罚": "law_行政处罚.json",
+    "交通": "law_交通.json",
+    "合同": "law_合同.json",
+    "公司": "law_公司.json"
+
+};
+
+var cache = {};
+
+function doSearch() {
+    document.getElementById("timetable").style.display = "none";
+document.getElementById("result").style.display = "block";
+    var keyword = document.getElementById("keyword").value.trim();
+    if (!keyword) return;
+
+    var result = document.getElementById("result");
+
+    var fileName = "laws_clean.json";
+    for (var key in fileMap) {
+        if (keyword.indexOf(key) >= 0 || key.indexOf(keyword) >= 0) {
+            fileName = fileMap[key];
+            break;
+        }
+    }
+
+    result.innerHTML = '<div class="loading">正在加载，请稍候...</div>';
+
+    if (cache[fileName]) {
+        renderResults(cache[fileName], keyword);
+        return;
+    }
+
+    fetch(fileName)
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            cache[fileName] = data;
+            renderResults(data, keyword);
+        })
+        .catch(function() {
+            result.innerHTML = '<div class="empty">数据加载失败</div>';
+        });
+}
+
+function renderResults(data, keyword) {
+    var result = document.getElementById("result");
+    result.innerHTML = "";
+
+    var count = 0;
+    for (var i = 0; i < data.length; i++) {
+        var law = data[i];
+        if (law.title.indexOf(keyword) >= 0) {
+            var item = document.createElement("div");
+            item.className = "law-item";
+
+            var title = document.createElement("div");
+            title.className = "law-title";
+            title.textContent = law.title;
+            title.onclick = (function(el) {
+                return function() {
+                    el.parentElement.classList.toggle("open");
+                };
+            })(title);
+
+            var body = document.createElement("div");
+            body.className = "law-body";
+            body.appendChild(buildContent(law.content));
+
+            item.appendChild(title);
+            item.appendChild(body);
+            result.appendChild(item);
+
+            count++;
+            if (count >= 30) break;
+        }
+    }
+
+    if (count === 0) {
+        result.innerHTML = '<div class="empty">没搜到结果</div>';
+    }
+}
+
+function buildContent(content) {
+    content = content.replace(/\\n/g, "\n").replace(/\\u3000/g, "　");
+
+    var wrapper = document.createElement("div");
+
+    var parts = content.split(/(?=第[一二三四五六七八九十]+[编章节])/);
+
+    parts.forEach(function(part) {
+        var text = part.trim();
+        if (!text) return;
+
+        var match = text.match(/^第[一二三四五六七八九十]+([编章节])/);
+
+        if (match) {
+            var firstLine = text.split("\n")[0];
+
+            // 目录（没有“第X条”）
+            if (!/第[一二三四五六七八九十百]+条/.test(text)) {
+                var tocDiv = document.createElement("div");
+                tocDiv.className = "plain-text";
+
+                var tocLines = text.split("\n");
+                tocLines.forEach(function(line) {
+                    var l = line.trim();
+                    if (!l) return;
+
+                    var m = l.match(/^第[一二三四五六七八九十]+([编章节])/);
+                    if (m) {
+                        var a = document.createElement("div");
+                        a.className = "toc-link level-" + m[1];
+                        a.textContent = l;
+                        a.onclick = function() {
+                            var target = document.getElementById(l);
+                            if (target) {
+                                target.classList.add("open");
+                                target.scrollIntoView({ behavior: "smooth" });
+                            }
+                        };
+                        tocDiv.appendChild(a);
+                    } else {
+                        var p = document.createElement("div");
+                        p.textContent = l;
+                        tocDiv.appendChild(p);
+                    }
+                });
+
+                wrapper.appendChild(tocDiv);
+                return;
+            }
+
+            // 正文
+            var rest = text.slice(firstLine.length).trim();
+
+            var section = document.createElement("div");
+            section.className = "law-section";
+            section.id = firstLine;
+
+            var secTitle = document.createElement("div");
+            secTitle.className = "section-title level-" + match[1];
+            secTitle.textContent = firstLine;
+            secTitle.onclick = function() {
+                section.classList.toggle("open");
+            };
+
+            var secBody = document.createElement("div");
+            secBody.className = "section-body";
+
+            // 把正文按“第X条”拆成条目，每条之间加一点间距
+            var articles = rest.split(/(?=第[一二三四五六七八九十百]+条)/);
+            articles.forEach(function(art) {
+                var t = art.trim();
+                if (!t) return;
+                var d = document.createElement("div");
+                d.className = "article";
+                d.textContent = t;
+                secBody.appendChild(d);
+            });
+
+            section.appendChild(secTitle);
+            section.appendChild(secBody);
+            wrapper.appendChild(section);
+        } else {
+            var p2 = document.createElement("div");
+            p2.className = "plain-text";
+            p2.textContent = text;
+            wrapper.appendChild(p2);
+        }
+    });
+
+    return wrapper;
+}
+// 课表数据
+var timetable = {
+    1: [
+        { name: "大学英语 A (I)", time: "8:30-10:10", place: "东校区仁智楼 A302" },
+        { name: "大学体育 I", time: "10:30-12:10", place: "运动场" }
+    ],
+    2: [
+        { name: "中国近现代史纲要（5-16周）", time: "10:30-12:10", place: "东校区仁智楼 A302" }
+    ],
+    3: [
+        { name: "大学英语 A (I)", time: "10:30-12:10", place: "东校区仁智楼 D303" },
+        { name: "大学生安全教育", time: "14:30-16:10", place: "东校区仁智楼 D303" }
+    ],
+    4: [
+        { name: "宪法学", time: "8:30-10:10", place: "东校区仁智楼 A106" },
+        { name: "中国近现代史纲要（5-16周）", time: "10:30-12:10", place: "东外语楼北 206" },
+        { name: "法理学（5-18周）", time: "14:30-16:10", place: "东校区仁智楼 B311" },
+        { name: "大学生心理健康教育（6-15周）", time: "16:30-18:10", place: "东校区仁智楼 A106" }
+    ],
+    5: [
+        { name: "宪法学（5-17周）", time: "8:30-10:10", place: "东校区仁智楼 A106" },
+        { name: "法理学（5-17周）", time: "14:30-16:10", place: "东校区仁智楼 D303" }
+    ],
+    6: [],
+    7: []
+};
+
+var weekNames = ["", "周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+
+var showAll = false;
+
+function showTimetable() {
+    var today = new Date().getDay();
+    if (today === 0) today = 7;
+
+    var html = "";
+
+    html += '<div class="tt-close" onclick="closeTimetable()">✕ 关闭</div>';
+    html += '<div class="tt-switch" onclick="toggleAll()">' + (showAll ? "只显示今天" : "显示全部") + '</div>';
+
+    if (showAll) {
+        for (var d = 1; d <= 7; d++) {
+            if (timetable[d].length === 0) continue;
+            html += buildDay(d, d === today);
+        }
+    } else {
+        if (timetable[today].length === 0) {
+            html += '<div class="tt-day"><div class="tt-day-title">' + weekNames[today] + '（今天）</div>';
+            html += '<div class="tt-course">今天没有课</div></div>';
+        } else {
+            html += buildDay(today, true);
+        }
+    }
+
+    document.getElementById("timetable").innerHTML = html;
+    document.getElementById("timetable").style.display = "block";
+    document.getElementById("result").style.display = "none";
+}
+
+function closeTimetable() {
+    document.getElementById("timetable").style.display = "none";
+    document.getElementById("result").style.display = "block";
+    showAll = false;
+}
+
+
+
+
+function toggleAll() {
+    showAll = !showAll;
+    showTimetable();
+}
+
+function renderTimetable() {
+    var box = document.getElementById("timetable");
+
+    var today = new Date().getDay();
+    if (today === 0) today = 7;
+
+    var html = "";
+
+    // 顶部：切换按钮
+    html += '<div class="tt-switch" onclick="toggleAll()">';
+    html += showAll ? "只显示今天" : "显示全部";
+    html += '</div>';
+
+    if (showAll) {
+        // 全部
+        for (var d = 1; d <= 7; d++) {
+            if (timetable[d].length === 0) continue;
+            html += buildDay(d, false);
+        }
+    } else {
+        // 只显示今天
+        if (timetable[today].length === 0) {
+            html += '<div class="tt-day"><div class="tt-day-title">' + weekNames[today] + '（今天）</div>';
+            html += '<div class="tt-course">今天没有课</div></div>';
+        } else {
+            html += buildDay(today, true);
+        }
+    }
+
+    box.innerHTML = html;
+}
+
+function buildDay(d, isToday) {
+    var courses = timetable[d];
+    var count = courses.length;
+
+    var html = '<div class="tt-day">';
+    html += '<div class="tt-day-title">' + weekNames[d] + (isToday ? '（今天）' : '') + '</div>';
+
+    if (count === 0) {
+        html += '<div class="tt-course tt-center">今天没有课</div>';
+    } else {
+        var gap = (count >= 4) ? 6 : 18;
+        courses.forEach(function(c) {
+            html += '<div class="tt-course" style="text-align:center; margin-bottom:' + gap + 'px;">';
+            html += c.time + ' · ' + c.name + (c.place ? ' · ' + c.place : '');
+            html += '</div>';
+        });
+    }
+
+    html += '</div>';
+    return html;
+}
+</script>
+
+</body>
+</html>
